@@ -1,0 +1,4 @@
+vendor/
+.env
+
+firebase-credentials.json
