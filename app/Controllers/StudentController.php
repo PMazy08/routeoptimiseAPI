@@ -68,11 +68,10 @@ class StudentController
         }
     }
 
-    // // GET All BY Page
+    // // GET 10 BY Page
     public function getPaginatedStudents(Request $request, Response $response, $args)
     {
         try {
-            var_dump("IN PAGE");
             $page = isset($args['page']) ? (int)$args['page'] : 1;
             $perPage = 10; // จำนวนข้อมูลที่จะแสดงต่อหน้า
             $user = $this->getUserFromRequest($request); 

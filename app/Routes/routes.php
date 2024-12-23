@@ -16,7 +16,7 @@ return function (App $app) {
         $group->get('/students/{id}', 'App\Controllers\StudentController:getById'); // GET /api/students/{id}
 
         $group->get('/students/status/{status}', 'App\Controllers\StudentController:getAllByStatus');
-        // $group->get('/students/page/{page}', 'App\Controllers\StudentController:getPaginatedStudents');
+        $group->get('/students/page/{page}', 'App\Controllers\StudentController:getPaginatedStudents');
 
         $group->post('/students', 'App\Controllers\StudentController:create'); // POST /api/students
 
@@ -25,17 +25,4 @@ return function (App $app) {
         $group->put('/students/status/{id}', 'App\Controllers\StudentController:updateStatus');
         $group->delete('/students/{id}', 'App\Controllers\StudentController:delete'); // DELETE /api/students/{id}
     })->add(FirebaseAuthMiddleware::class);
-
-
-
-    
-    // TEST
-    $app->group('/test2', function (\Slim\Routing\RouteCollectorProxy $group) {
-
-        $group->get('/students', 'App\Controllers\StudentController:getAll'); // GET /api/students
-
-    })->add(FirebaseAuthMiddleware::class);
 };
-
-
-

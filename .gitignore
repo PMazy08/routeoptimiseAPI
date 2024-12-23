@@ -2,3 +2,5 @@ vendor/
 .env
 
 firebase-credentials.json
+
+planningRouteConference.js

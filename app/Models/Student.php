@@ -1,13 +1,22 @@
 <?php
 
 namespace App\Models;
-use App\Config\Database; 
+use App\Config\Database;
 
 class Student {
+    private static $db;
+
+    // สร้างฟังก์ชันเชื่อมต่อฐานข้อมูลเพียงครั้งเดียว
+    private static function connect() {
+        if (self::$db === null) {
+            self::$db = Database::connect();
+        }
+        return self::$db;
+    }
 
     // ฟังก์ชันตรวจสอบว่า student มีอยู่ในฐานข้อมูลหรือไม่
     private static function checkStudentExists($id, $user_id) {
-        $stmt = Database::connect()->prepare("SELECT COUNT(*) FROM students WHERE id = ? AND user_id = ?");
+        $stmt = self::connect()->prepare("SELECT COUNT(*) FROM students WHERE id = ? AND user_id = ?");
         $stmt->execute([$id, $user_id]);
         return $stmt->fetchColumn() > 0;
     }
@@ -18,7 +27,7 @@ class Student {
         if ($extra_condition) {
             $query .= " AND $extra_condition";
         }
-        $stmt = Database::connect()->prepare($query);
+        $stmt = self::connect()->prepare($query);
         $stmt->execute([$user_id]);
         return $stmt->fetchAll();
     }
@@ -39,11 +48,11 @@ class Student {
         return self::getStudentData($user_id, "status = $status");
     }
 
-    // // GET All BY Page
+    // GET 10 BY Page
     public static function getAllPaginated($page = 1, $perPage = 10, $user_id) {
         $offset = ($page - 1) * $perPage;
     
-        $stmt = Database::connect()->prepare(
+        $stmt = self::connect()->prepare(
             "SELECT * FROM students WHERE user_id = :user_id LIMIT :limit OFFSET :offset"
         );
     
@@ -57,10 +66,26 @@ class Student {
     }
 
     // CREATE
+    // CREATE
     public static function create($data, $user_id) {
-        $stmt = Database::connect()->prepare(
+        // ตรวจสอบค่าที่ได้รับ
+        if (!is_string($data['student_id']) || 
+            !is_string($data['first_name']) || 
+            !is_string($data['last_name']) || 
+            !is_numeric($data['age']) || 
+            !is_string($data['gender']) || 
+            !is_string($data['address']) || 
+            !is_float($data['latitude']) || 
+            !is_float($data['longitude']) || 
+            !is_bool($data['status'])) {
+            
+            return ['error' => 'Invalid data type detected'];
+        }
+
+        // หากข้อมูลถูกต้อง ทำการ INSERT
+        $stmt = self::connect()->prepare(
             "INSERT INTO students (student_id, first_name, last_name, age, gender, address, latitude, longitude, status, user_id) 
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
         );
         $stmt->execute([
             $data['student_id'], 
@@ -74,16 +99,19 @@ class Student {
             $data['status'],
             $user_id
         ]);
+
         return ['message' => 'Student created successfully'];
     }
 
-    // UPDATE ALL
+
+
+    // UPDATE ALL JSON
     public static function updateAll($id, $data, $user_id) {
         if (!self::checkStudentExists($id, $user_id)) {
             return ['error' => 'Unauthorized or student not found'];
         }
 
-        $stmt = Database::connect()->prepare(
+        $stmt = self::connect()->prepare(
             "UPDATE students 
              SET first_name = ?, last_name = ?, age = ?, gender = ?, address = ?, latitude = ?, longitude = ?, status = ? 
              WHERE id = ? AND user_id = ?"
@@ -109,7 +137,7 @@ class Student {
             return ['error' => 'Unauthorized or student not found'];
         }
 
-        $stmt = Database::connect()->prepare("UPDATE students SET status = ? WHERE id = ? AND user_id = ?");
+        $stmt = self::connect()->prepare("UPDATE students SET status = ? WHERE id = ? AND user_id = ?");
         $stmt->execute([$data['status'], $id, $user_id]);
         return ['message' => 'Student updated successfully'];
     }
@@ -120,7 +148,7 @@ class Student {
             return ['error' => 'Unauthorized or student not found'];
         }
 
-        $stmt = Database::connect()->prepare("DELETE FROM students WHERE id = ? AND user_id = ?");
+        $stmt = self::connect()->prepare("DELETE FROM students WHERE id = ? AND user_id = ?");
         $stmt->execute([$id, $user_id]);
 
         if ($stmt->rowCount() > 0) {
@@ -132,7 +160,7 @@ class Student {
 
     // SEARCH
     public static function search($find, $user_id) {
-        $stmt = Database::connect()->prepare(
+        $stmt = self::connect()->prepare(
             "SELECT * FROM students 
              WHERE (first_name LIKE :find OR last_name LIKE :find OR address LIKE :find) 
              AND user_id = :user_id"
