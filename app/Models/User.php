@@ -1,7 +1,8 @@
 <?php
 
 namespace App\Models;
-use App\Config\Database; // อ้างอิง Database class จาก Config
+
+use App\Config\Database;
 
 class User {
     // GET ByUID
