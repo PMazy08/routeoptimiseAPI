@@ -4,6 +4,10 @@ namespace App\Controllers;
 
 use App\Models\Student;
 use App\Helpers\UserHelper;
+
+use Psr\Http\Message\ServerRequestInterface as Request;
+use Psr\Http\Message\ResponseInterface as Response;
+
  
 class StudentController{
     // GET ALL
@@ -46,26 +50,58 @@ class StudentController{
         return $response->withHeader('Content-Type', 'application/json');
     }
 
-    // CREATE
-    public function create(Request $request, Response $response, array $args): Response{
-        try {
-            $rawData = file_get_contents("php://input");
-            $data = json_decode($rawData, true);
-            $user = UserHelper::getUserFromRequest($request); 
-            $result = Student::create($data, $user['id']);
-            $response->getBody()->write(json_encode($result));
-            return $response->withHeader('Content-Type', 'application/json');
-        } catch (\Exception $e) {
-            $response->getBody()->write(json_encode(['error' => $e->getMessage()]));
-            return $response->withHeader('Content-Type', 'application/json')->withStatus(404);
+    // // CREATE
+    // public function create(Request $request, Response $response, array $args): Response{
+    //     try {
+    //         // $rawData = file_get_contents("php://input");
+    //         // $data = json_decode($rawData, true);
+
+    //         $data = json_decode($request->getBody()->getContents(), true);
+    //         $user = UserHelper::getUserFromRequest($request); 
+    //         $result = Student::create($data, $user['id']);
+    //         $response->getBody()->write(json_encode($result));
+    //         return $response->withHeader('Content-Type', 'application/json');
+    //     } catch (\Exception $e) {
+    //         $response->getBody()->write(json_encode(['error' => $e->getMessage()]));
+    //         return $response->withHeader('Content-Type', 'application/json')->withStatus(404);
+    //     }
+    // }
+
+    public function create(Request $request, Response $response, array $args): Response
+{
+    try {
+        // อ่าน JSON data จาก body ของ request
+        $data = json_decode($request->getBody()->getContents(), true);
+
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            throw new \InvalidArgumentException('Invalid JSON format');
         }
+
+        // ดึงข้อมูล user จาก request
+        $user = UserHelper::getUserFromRequest($request); 
+
+        // บันทึกข้อมูลลงในโมเดล Student
+        $result = Student::create($data, $user['id']);
+
+        // ส่งผลลัพธ์กลับไปใน response
+        $response->getBody()->write(json_encode($result));
+        return $response->withHeader('Content-Type', 'application/json');
+    } catch (\Exception $e) {
+        // จัดการข้อผิดพลาด
+        $response->getBody()->write(json_encode(['error' => $e->getMessage()]));
+        return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
     }
+}
+
 
     // UPDATE FULL json
     public function updateFull(Request $request, Response $response, array $args): Response{
         try {
             $id = $args['id'];
+
             $rawData = file_get_contents("php://input");
+            // $data = json_decode($request->getBody()->getContents(), true);
+
             $data = json_decode($rawData, true);
             $user = UserHelper::getUserFromRequest($request); 
             $result = Student::updateAll($id, $data, $user['id']);
@@ -81,8 +117,10 @@ class StudentController{
     public function updateStatus(Request $request, Response $response, array $args): Response{
         try {
             $id = $args['id'];
-            $rawData = file_get_contents("php://input");
-            $data = json_decode($rawData, true);
+            // $rawData = file_get_contents("php://input");
+            // $data = json_decode($rawData, true);
+            
+            $data = json_decode($request->getBody()->getContents(), true);
             $user = UserHelper::getUserFromRequest($request); 
             $result = Student::updateStatus($id, $data, $user['id']);
             $response->getBody()->write(json_encode($result));
@@ -94,7 +132,7 @@ class StudentController{
     }
 
     // DELETE
-    public function delete(Request $request, Response $response, $args){
+    public function delete($request, $response, $args){
         try {
             $id = $args['id'];
             $user = UserHelper::getUserFromRequest($request); 

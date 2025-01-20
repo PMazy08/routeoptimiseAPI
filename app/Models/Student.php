@@ -72,41 +72,87 @@ class Student {
     
 
     // CREATE
-    public static function create($data, $user_id) {
-        // ตรวจสอบค่าที่ได้รับ
-        if (!is_string($data['student_id']) || 
-            !is_string($data['first_name']) || 
-            !is_string($data['last_name']) || 
-            !is_numeric($data['age']) || 
-            !is_string($data['gender']) || 
-            !is_string($data['address']) || 
-            !is_float($data['latitude']) || 
-            !is_float($data['longitude']) || 
-            !is_bool($data['status'])) {
+    // public static function create($data, $user_id) {
+    //     var_dump($data);
+    //     // ตรวจสอบค่าที่ได้รับ
+    //     if (!is_string($data['student_id']) || 
+    //         !is_string($data['first_name']) || 
+    //         !is_string($data['last_name']) || 
+    //         !is_numeric($data['age']) || 
+    //         !is_string($data['gender']) || 
+    //         !is_string($data['address']) || 
+    //         !is_float($data['latitude']) || 
+    //         !is_float($data['longitude']) || 
+    //         !is_bool($data['status'])) {
             
-            return ['error' => 'Invalid data type detected'];
+    //         return ['error' => 'Invalid data type detected'];
+    //     }
+
+    //     // หากข้อมูลถูกต้อง ทำการ INSERT
+    //     $stmt = Database::connect()->prepare(
+    //         "INSERT INTO students (student_id, first_name, last_name, age, gender, address, latitude, longitude, status, user_id) 
+    //         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+    //     );
+    //     $stmt->execute([
+    //         $data['student_id'], 
+    //         $data['first_name'], 
+    //         $data['last_name'], 
+    //         $data['age'],
+    //         $data['gender'],
+    //         $data['address'], 
+    //         $data['latitude'], 
+    //         $data['longitude'],
+    //         $data['status'],
+    //         $user_id
+    //     ]);
+
+    //     return ['message' => 'Student created successfully'];
+    // }
+
+    public static function create($data, $user_id) {
+        try {
+            // ตรวจสอบค่าที่ได้รับ
+            if (!isset($data['student_id'], $data['first_name'], $data['last_name'], $data['age'], 
+                      $data['gender'], $data['address'], $data['latitude'], $data['longitude'], $data['status'])) {
+                return ['error' => 'Missing required fields'];
+            }
+    
+            $data['age'] = is_numeric($data['age']) ? (int)$data['age'] : null;
+            $data['latitude'] = is_numeric($data['latitude']) ? (float)$data['latitude'] : null;
+            $data['longitude'] = is_numeric($data['longitude']) ? (float)$data['longitude'] : null;
+            $data['status'] = filter_var($data['status'], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+    
+            if (!$data['age'] || !$data['latitude'] || !$data['longitude'] || $data['status'] === null) {
+                return ['error' => 'Invalid data type detected'];
+            }
+    
+            // หากข้อมูลถูกต้อง ทำการ INSERT
+            $stmt = Database::connect()->prepare(
+                "INSERT INTO students (student_id, first_name, last_name, age, gender, address, latitude, longitude, status, user_id) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+            );
+            $stmt->execute([
+                $data['student_id'], 
+                $data['first_name'], 
+                $data['last_name'], 
+                $data['age'], 
+                $data['gender'], 
+                $data['address'], 
+                $data['latitude'], 
+                $data['longitude'], 
+                $data['status'], 
+                $user_id
+            ]);
+    
+            return ['message' => 'Student created successfully'];
+        } catch (\PDOException $e) {
+            return ['error' => 'Database error: ' . $e->getMessage()];
+        } catch (\Exception $e) {
+            return ['error' => 'Unexpected error: ' . $e->getMessage()];
         }
-
-        // หากข้อมูลถูกต้อง ทำการ INSERT
-        $stmt = Database::connect()->prepare(
-            "INSERT INTO students (student_id, first_name, last_name, age, gender, address, latitude, longitude, status, user_id) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
-        );
-        $stmt->execute([
-            $data['student_id'], 
-            $data['first_name'], 
-            $data['last_name'], 
-            $data['age'],
-            $data['gender'],
-            $data['address'], 
-            $data['latitude'], 
-            $data['longitude'],
-            $data['status'],
-            $user_id
-        ]);
-
-        return ['message' => 'Student created successfully'];
     }
+    
+
 
     // UPDATE ALL JSON
     public static function updateAll($id, $data, $user_id) {

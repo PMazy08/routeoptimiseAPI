@@ -43,6 +43,12 @@ return function (App $app) {
             $dropOff->get('/{id}', 'App\Controllers\DropOffController:getAllByRouteId'); 
         });
 
+        //CALCULATE ROUTES
+        $group->group('/calculate-route', function (\Slim\Routing\RouteCollectorProxy $dropOff) {
+            $dropOff->post('/or-tools', 'App\Controllers\CalculateRouteController:callOrTools');       
+        });
+
+
     })->add(FirebaseAuthMiddleware::class); 
 };
 
