@@ -10,11 +10,14 @@ return function (App $app) {
             $students->get('/search', 'App\Controllers\StudentController:search');
             $students->get('', 'App\Controllers\StudentController:getAll'); 
             $students->get('/{id}', 'App\Controllers\StudentController:getById');
+            $students->get('/lnglat/{lng}/{lat}', 'App\Controllers\StudentController:getByLngLat');
             $students->get('/status/{status}', 'App\Controllers\StudentController:getAllByStatus');
             $students->get('/page/{page}', 'App\Controllers\StudentController:getPaginatedStudents');
             $students->post('', 'App\Controllers\StudentController:create');
             $students->put('/{id}', 'App\Controllers\StudentController:updateFull'); 
             $students->put('/status/{id}', 'App\Controllers\StudentController:updateStatus');
+            
+            $students->delete('/delete-all', 'App\Controllers\StudentController:deleteAll');
             $students->delete('/{id}', 'App\Controllers\StudentController:delete'); 
         });
 
@@ -26,6 +29,7 @@ return function (App $app) {
         //TRIP
         $group->group('/trips', function (\Slim\Routing\RouteCollectorProxy $trips) {
             $trips->get('', 'App\Controllers\TripController:getAllByUserId'); 
+            $trips->post('', 'App\Controllers\TripController:create'); 
         });
 
         //ROUTE

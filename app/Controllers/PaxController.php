@@ -4,7 +4,6 @@ namespace App\Controllers;
 
 use App\Models\Pax;
 
-
 class PaxController{
     // GET ALL BY route_id
     public function getAllByRouteId($request, $response,  $args){

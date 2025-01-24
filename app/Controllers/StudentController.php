@@ -27,6 +27,18 @@ class StudentController{
         return $response->withHeader('Content-Type', 'application/json');
     }
 
+
+    // GET BY Lng Lat
+    public function getByLngLat($request, $response, $args){
+        $lng= $args['lng'];
+        $lat = $args['lat'];
+        $user = UserHelper::getUserFromRequest($request); 
+        $result = Student::getByLngLat($lng, $lat, $user['id']);
+        $response->getBody()->write(json_encode($result));
+        return $response->withHeader('Content-Type', 'application/json');
+    }
+
+
     // GET All BY Status
     public function getAllByStatus($request, $response, $args){
         $status = $args['status'] === 'true' ? 1 : ($args['status'] === 'false' ? 0 : null);
@@ -68,30 +80,30 @@ class StudentController{
     // }
 
     public function create(Request $request, Response $response, array $args): Response
-{
-    try {
-        // อ่าน JSON data จาก body ของ request
-        $data = json_decode($request->getBody()->getContents(), true);
+    {
+        try {
+            // อ่าน JSON data จาก body ของ request
+            $data = json_decode($request->getBody()->getContents(), true);
 
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            throw new \InvalidArgumentException('Invalid JSON format');
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                throw new \InvalidArgumentException('Invalid JSON format');
+            }
+
+            // ดึงข้อมูล user จาก request
+            $user = UserHelper::getUserFromRequest($request); 
+
+            // บันทึกข้อมูลลงในโมเดล Student
+            $result = Student::create($data, $user['id']);
+
+            // ส่งผลลัพธ์กลับไปใน response
+            $response->getBody()->write(json_encode($result));
+            return $response->withHeader('Content-Type', 'application/json');
+        } catch (\Exception $e) {
+            // จัดการข้อผิดพลาด
+            $response->getBody()->write(json_encode(['error' => $e->getMessage()]));
+            return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
         }
-
-        // ดึงข้อมูล user จาก request
-        $user = UserHelper::getUserFromRequest($request); 
-
-        // บันทึกข้อมูลลงในโมเดล Student
-        $result = Student::create($data, $user['id']);
-
-        // ส่งผลลัพธ์กลับไปใน response
-        $response->getBody()->write(json_encode($result));
-        return $response->withHeader('Content-Type', 'application/json');
-    } catch (\Exception $e) {
-        // จัดการข้อผิดพลาด
-        $response->getBody()->write(json_encode(['error' => $e->getMessage()]));
-        return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
     }
-}
 
 
     // UPDATE FULL json
@@ -131,12 +143,25 @@ class StudentController{
         }
     }
 
-    // DELETE
+    // DELETE ID
     public function delete($request, $response, $args){
         try {
             $id = $args['id'];
             $user = UserHelper::getUserFromRequest($request); 
             $result = Student::delete($id, $user['id']);
+            $response->getBody()->write(json_encode($result));
+            return $response->withHeader('Content-Type', 'application/json');
+        } catch (\Exception $e) {
+            $response->getBody()->write(json_encode(['error' => $e->getMessage()]));
+            return $response->withHeader('Content-Type', 'application/json')->withStatus(404);
+        }
+    }
+
+    // DELETE ALL
+    public function deleteAll($request, $response, $args){
+        try {
+            $user = UserHelper::getUserFromRequest($request); 
+            $result = Student::deleteAll($user['id']);
             $response->getBody()->write(json_encode($result));
             return $response->withHeader('Content-Type', 'application/json');
         } catch (\Exception $e) {
@@ -174,14 +199,16 @@ class StudentController{
         }
 
         $find = trim($params['find']);
+        $filter = trim($params['filter']);
         $page = isset($params['page']) ? (int)$params['page'] : 1;
         $perPage = 10; // กำหนดค่า perPage เป็น 10 ตายตัว
+
 
         // ดึง user_id จาก request
         $user = UserHelper::getUserFromRequest($request);
 
         // ค้นหานักเรียนพร้อมแบ่งหน้า
-        $result = Student::searchWithPagination($find, $page, $perPage, $user['id']);
+        $result = Student::searchWithPagination($filter, $find, $page, $perPage, $user['id']);
 
         // หากไม่มีผลลัพธ์
         if ($result['total_count'] === 0) {

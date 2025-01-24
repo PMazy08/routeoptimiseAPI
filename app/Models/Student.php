@@ -34,6 +34,24 @@ class Student {
         return $students ? $students[0] : null;
     }
 
+
+    // GET BY Lng Lat
+    public static function getByLngLat($lng, $lat, $user_id) {
+        $query = "SELECT * 
+                  FROM students 
+                  WHERE longitude = ? 
+                  AND latitude = ? 
+                  AND user_id = ?";
+                  
+        $stmt = Database::connect()->prepare($query);
+        $stmt->execute([$lng, $lat, $user_id]);
+    
+        // คืนค่าข้อมูลรายการแรกที่พบ หรือ null หากไม่พบ
+        $student = $stmt->fetch(\PDO::FETCH_ASSOC);
+        return $student ? $student : null;
+    }
+
+
     // GET All BY Status
     public static function getAllByStatus($status, $user_id) {
         return self::getStudentData($user_id, "status = $status");
@@ -207,6 +225,23 @@ class Student {
         }
     }
 
+
+    // DELETE ALL
+    public static function deleteAll($user_id) {
+        // if (!self::checkStudentExists($user_id)) {
+        //     return ['error' => 'Unauthorized or student not found'];
+        // }
+
+        $stmt = Database::connect()->prepare("DELETE FROM students WHERE user_id = ?");
+        $stmt->execute([$user_id]);
+
+        if ($stmt->rowCount() > 0) {
+            return ['message' => 'Students deleted'];
+        } else {
+            return ['message' => 'No matching student found to delete'];
+        }
+    }
+
     // SEARCH
     // public static function search($find, $user_id) {
     //     $stmt = Database::connect()->prepare(
@@ -221,19 +256,137 @@ class Student {
     //     return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     // }
 
+
+
+
+
     //searc2
-    public static function searchWithPagination($find, $page = 1, $perPage = 10, $user_id) {
+    // public static function searchWithPagination($filter, $find, $page = 1, $perPage = 10, $user_id) {
+
+    //     // var_dump("IN STUDENT $filter");
+
+    //     $offset = ($page - 1) * $perPage;
+    
+
+    //     // Query ดึงจำนวนแถวทั้งหมดที่ตรงกับคำค้นหา-----------------เดิม----------------------
+    //     // $countStmt = Database::connect()->prepare(
+    //     //     "SELECT COUNT(*) as total_count 
+    //     //      FROM students 
+    //     //      WHERE (first_name LIKE :find OR last_name LIKE :find OR age LIKE :find OR gender LIKE :find OR address LIKE :find) 
+    //     //      AND user_id = :user_id"
+    //     // );
+    //     // $countStmt->execute([
+    //     //     ':find' => '%' . $find . '%',
+    //     //     ':user_id' => $user_id
+    //     // ]);
+    //     // $totalCount = $countStmt->fetch(\PDO::FETCH_ASSOC)['total_count'];
+    //     // // Query ดึงข้อมูลแบบแบ่งหน้า
+    //     // $stmt = Database::connect()->prepare(
+    //     //     "SELECT * 
+    //     //      FROM students 
+    //     //      WHERE (first_name LIKE :find OR last_name LIKE :find OR age LIKE :find OR gender LIKE :find OR address LIKE :find) 
+    //     //      AND user_id = :user_id 
+    //     //      LIMIT :limit OFFSET :offset"
+    //     // );
+
+
+
+
+
+    //     // กำหนดเงื่อนไข WHERE และ ORDER BY ตาม $filter
+    //     if ($filter === 'first_name') {
+    //         $whereCondition = "first_name LIKE :find"; // เงื่อนไขค้นหาเฉพาะ first_name
+    //         $orderBy = "ORDER BY first_name ASC"; // เรียงตาม first_name
+    //     } elseif ($filter === 'last_name') {
+    //         $whereCondition = "last_name :find";
+    //         $orderBy = "ORDER BY last_name ASC";
+    //     } elseif ($filter === 'age') {
+    //         $whereCondition = "age LIKE :find";
+    //         $orderBy = "";
+    //     } elseif ($filter === 'gender') {
+    //         $whereCondition = "gender LIKE :find";
+    //         $orderBy = "";
+    //     } elseif ($filter === 'address') {
+    //         $whereCondition = "address LIKE :find";
+    //         $orderBy = "ORDER BY address ASC";
+    //     } else {
+    //         $whereCondition = "(first_name LIKE :find OR last_name LIKE :find OR age LIKE :find OR gender LIKE :find OR address LIKE :find)";
+    //         $orderBy = ""; // ไม่ต้องเรียงลำดับเป็นพิเศษ
+    //     }
+
+
+    //     // Query ดึงจำนวนแถวทั้งหมดที่ตรงกับคำค้นหา
+    //     $countStmt = Database::connect()->prepare(
+    //         "SELECT COUNT(*) as total_count 
+    //         FROM students 
+    //         WHERE $whereCondition 
+    //         AND user_id = :user_id"
+    //     );
+    //     $countStmt->execute([
+    //         ':find' => '%' . $find . '%',
+    //         ':user_id' => $user_id
+    //     ]);
+    //     $totalCount = $countStmt->fetch(\PDO::FETCH_ASSOC)['total_count'];
+
+    //     // Query ดึงข้อมูลแบบแบ่งหน้า
+    //     $stmt = Database::connect()->prepare(
+    //         "SELECT * 
+    //         FROM students 
+    //         WHERE $whereCondition 
+    //         AND user_id = :user_id 
+    //         $orderBy 
+    //         LIMIT :limit OFFSET :offset"
+    //     );
+    //     $stmt->bindValue(':find', '%' . $find . '%', \PDO::PARAM_STR);
+    //     $stmt->bindValue(':user_id', $user_id, \PDO::PARAM_INT);
+    //     $stmt->bindValue(':limit', (int)$perPage, \PDO::PARAM_INT);
+    //     $stmt->bindValue(':offset', (int)$offset, \PDO::PARAM_INT);
+    //     $stmt->execute();
+    //     $students = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    
+    //     // คืนค่าผลลัพธ์พร้อม total_count
+    //     return [
+    //         'total_count' => $totalCount,
+    //         'per_page' => $perPage,
+    //         'current_page' => $page,
+    //         'students' => $students,
+    //     ];
+    // }
+
+
+
+    public static function searchWithPagination($filter, $find, $page = 1, $perPage = 10, $user_id) {
         $offset = ($page - 1) * $perPage;
+    
+        if ($filter === 'first_name') {
+            $whereCondition = "first_name LIKE :find"; // เงื่อนไขค้นหาเฉพาะ first_name
+            $orderBy = "ORDER BY first_name ASC"; // เรียงตาม first_name
+        } elseif ($filter === 'last_name') {
+            $whereCondition = "last_name LIKE :find";
+            $orderBy = "ORDER BY last_name ASC";
+        } elseif ($filter === 'age') {
+            $whereCondition = "age = :find"; // ใช้ = แทน LIKE
+            $orderBy = "";
+        } elseif ($filter === 'gender') {
+            $whereCondition = "gender = :find"; // ใช้ = แทน LIKE
+            $orderBy = "";
+        } elseif ($filter === 'address') {
+            $whereCondition = "address LIKE :find";
+            $orderBy = "ORDER BY address ASC";
+        } else {
+            $whereCondition = "(first_name LIKE :find OR last_name LIKE :find OR age = :find OR gender = :find OR address LIKE :find)";
+            $orderBy = ""; // ไม่ต้องเรียงลำดับเป็นพิเศษ
+        }
     
         // Query ดึงจำนวนแถวทั้งหมดที่ตรงกับคำค้นหา
         $countStmt = Database::connect()->prepare(
             "SELECT COUNT(*) as total_count 
-             FROM students 
-             WHERE (first_name LIKE :find OR last_name LIKE :find OR address LIKE :find) 
-             AND user_id = :user_id"
+            FROM students 
+            WHERE $whereCondition 
+            AND user_id = :user_id"
         );
         $countStmt->execute([
-            ':find' => '%' . $find . '%',
+            ':find' => ($filter === 'age' || $filter === 'gender') ? $find : '%' . $find . '%',
             ':user_id' => $user_id
         ]);
         $totalCount = $countStmt->fetch(\PDO::FETCH_ASSOC)['total_count'];
@@ -241,12 +394,13 @@ class Student {
         // Query ดึงข้อมูลแบบแบ่งหน้า
         $stmt = Database::connect()->prepare(
             "SELECT * 
-             FROM students 
-             WHERE (first_name LIKE :find OR last_name LIKE :find OR address LIKE :find) 
-             AND user_id = :user_id 
-             LIMIT :limit OFFSET :offset"
+            FROM students 
+            WHERE $whereCondition 
+            AND user_id = :user_id 
+            $orderBy 
+            LIMIT :limit OFFSET :offset"
         );
-        $stmt->bindValue(':find', '%' . $find . '%', \PDO::PARAM_STR);
+        $stmt->bindValue(':find', ($filter === 'age' || $filter === 'gender') ? $find : '%' . $find . '%', \PDO::PARAM_STR);
         $stmt->bindValue(':user_id', $user_id, \PDO::PARAM_INT);
         $stmt->bindValue(':limit', (int)$perPage, \PDO::PARAM_INT);
         $stmt->bindValue(':offset', (int)$offset, \PDO::PARAM_INT);
@@ -261,6 +415,5 @@ class Student {
             'students' => $students,
         ];
     }
-    
 
 }
